@@ -1,0 +1,84 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Generate synthetic data
+np.random.seed(42)
+X = 2 * np.random.rand(100, 1) # 2*[100 0 to 1 arrays]
+y = 4 + 3 * X + np.random.randn(100, 1)
+
+# Add bias term to feature matrix
+x_b = np.c_[np.ones((100, 1)), X]
+
+# Initialize parameters
+theta = np.random.randn(2, 1)
+learning_rate = 0.1
+max_iterations = 1000
+tolerance = 1e-6
+
+
+def predict(x, theta):
+    """Predict y values using the model parameters."""
+    if not isinstance(x, np.ndarray) or not isinstance(theta, np.ndarray):
+        raise ValueError("Inputs x and theta must be NumPy arrays")
+    if x.shape[1] != theta.shape[0]:
+        raise ValueError(f"Shape mismatch: x columns ({x.shape[1]}) must equal theta rows ({theta.shape[0]})")
+    return np.dot(x, theta)
+
+
+def mean_squared_error(y_true, y_pred):
+    """Calculate mean squared error."""
+    if y_true.shape != y_pred.shape:
+        raise ValueError(f"Shape mismatch: y_true shape {y_true.shape} != y_pred shape {y_pred.shape}")
+    return np.mean((y_true - y_pred) ** 2)
+
+
+def r_squared(y_true, y_pred):
+    """Calculate R-squared score."""
+    if y_true.shape != y_pred.shape:
+        raise ValueError(f"Shape mismatch: y_true shape {y_true.shape} != y_pred shape {y_pred.shape}")
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    return 1 - (ss_res / ss_tot)
+
+
+def gradient_descent(x, y, theta, learning_rate, max_iterations, tolerance):
+    """Optimize model parameters using gradient descent with convergence check."""
+    if learning_rate <= 0:
+        raise ValueError("Learning rate must be positive")
+    if x.shape[0] != y.shape[0]:
+        raise ValueError(f"Shape mismatch: x rows ({x.shape[0]}) must equal y rows ({y.shape[0]})")
+
+    m = len(y)
+    prev_loss = float('inf')
+    for i in range(max_iterations):
+        gradients = (1 / m) * np.dot(x.T, (np.dot(x, theta) - y))
+        theta -= learning_rate * gradients
+        current_loss = mean_squared_error(y, predict(x, theta))
+        if abs(prev_loss - current_loss) < tolerance:
+            print(f"Converged after {i + 1} iterations")
+            break
+        prev_loss = current_loss
+    return theta
+
+# Perform gradient descent
+try:
+    theta_optimized = gradient_descent(x_b, y, theta, learning_rate, max_iterations, tolerance)
+    y_pred = predict(x_b, theta_optimized)
+    mse = mean_squared_error(y, y_pred)
+    r2 = r_squared(y, y_pred)
+
+    print("Optimized Parameters (theta):", theta_optimized)
+    print("Mean Squared Error:", mse)
+    print("R-squared:", r2)
+
+    # Visualize the results
+    plt.scatter(X, y, color='blue', label='Data points')
+    plt.plot(X, y_pred, color='red', label='Regression Line')
+    plt.xlabel('X')
+    plt.ylabel('y')
+    plt.title('Linear Regression Fit')
+    plt.legend()
+    plt.show()
+
+except ValueError as e:
+    print(f"Error: {e}")
