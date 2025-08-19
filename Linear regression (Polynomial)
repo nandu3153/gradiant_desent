@@ -1,0 +1,55 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Generate synthetic data
+np.random.seed(42)
+x = np.random.rand(100, 1) * 10
+y = 3 * x.squeeze()**2 + 2 * x.squeeze() + np.random.randn(100) * 2  # 1D ARRAY
+
+# Split data into training and testing sets
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Transform x features to polynomial (degree=2)
+poly_feature = PolynomialFeatures(degree=2, include_bias=False)
+x_train_poly = poly_feature.fit_transform(x_train)
+x_test_poly = poly_feature.transform(x_test)
+
+# Train data with Linear Regression
+model = LinearRegression()
+model.fit(x_train_poly, y_train)
+
+# Make predictions
+y_train_pred = model.predict(x_train_poly)
+y_test_pred = model.predict(x_test_poly)
+
+# Evaluate model
+train_mse = mean_squared_error(y_train, y_train_pred)
+test_mse = mean_squared_error(y_test, y_test_pred)
+test_r2 = r2_score(y_test, y_test_pred)
+print(f"Training Mean Squared Error: {train_mse:.2f}")
+print(f"Testing Mean Squared Error: {test_mse:.2f}")
+print(f"Testing R² Score: {test_r2:.2f}")
+
+
+# Sort x for smooth curve plotting
+x_sorted = np.sort(x, axis=0)
+x_sorted_poly = poly_feature.transform(x_sorted)
+y_sorted_pred = model.predict(x_sorted_poly)
+
+# Visualize results
+plt.scatter(x_train, y_train, label="Training Data", color="blue")
+plt.scatter(x_test, y_test, label="Testing Data", color="green")
+plt.plot(x_sorted, y_sorted_pred, label="Polynomial Fit", color="red", linewidth=2)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Polynomial Regression (Degree=2)")
+plt.legend()
+plt.show()
+
+# Print model parameters
+print(f"Coefficients: {model.coef_}")
+print(f"Intercept: {model.intercept_:.2f}")
